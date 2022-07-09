@@ -14,6 +14,7 @@ public class Snake {
     public ArrayList<Integer> posY = new ArrayList<>();
 
     public boolean alive = true;
+    private BotSnakeMovement movement = new BotSnakeMovement();
 
     //Posiciones de inicio
     private final PVector initialPosition1;
@@ -39,6 +40,19 @@ public class Snake {
 
         posX.remove( posX.size() - 1);
         posY.remove( posY.size() - 1);
+    }
+    //Se producirá el movimeinto del bot
+    public void mover(PVector apple, boolean[][] map){
+        PVector headSnake = new PVector(posX.get(0),posY.get(0));
+        PVector tailSnake = new PVector(posX.get(posX.size()-1),posY.get(posY.size()-1));
+
+        PVector nextMove = movement.getNewPosition(map, headSnake, tailSnake, apple, posX.size());
+
+        posX.add(0,posX.get(0) + (int)nextMove.x);
+        posY.add(0,posY.get(0) + (int)nextMove.y);
+
+        posX.remove(posX.size()-1);
+        posY.remove(posY.size()-1);
     }
 
     //Añade una nueva posicion

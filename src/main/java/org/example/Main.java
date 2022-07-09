@@ -23,6 +23,7 @@ public class Main extends PApplet {
     Apple apple = new Apple();
 
     Snake humanSnake = new Snake(100,200, 100, new PVector(2,2), new PVector(2,1));
+    Snake botSnake = new Snake(100, 100, 200, new PVector(18, 18), new PVector(18, 19));
 
     @Override
     public void settings(){
@@ -38,34 +39,18 @@ public class Main extends PApplet {
     @Override
     public void draw(){
         background(25);
+        updateMap();
         drawMap();
         drawApple();
 
         plaHumanSnake();
+        playBotSnake(botSnake);
     }
 
     void initGame(){
         updateMap();
         apple.spawn(map);
     }
-
-    void detectBorder(Snake snake){
-        if (snake.posX.get(0) < 0 || snake.posX.get(0) > (columnas -1) || snake.posY.get(0) < 0  || snake.posY.get(0) > (filas - 1)){
-            snake.restart();
-            initGame();
-        }
-    }
-    void crashSnake (Snake s ){
-        //Comprueba si se choca consigo mismo
-        if (s.alive){
-            for (int i=0; i<s.posX.size(); i++){
-                if (s.posX.get(0) == s.posX.get(i) && s.posY.get(0) == s.posY.get(i)){
-                    s.restart();
-                }
-            }
-        }
-    }
-
     void updateMap(){
         //Asignamos todo el mapa a true primero
         for (int i=0; i<filas;i++){
@@ -74,8 +59,12 @@ public class Main extends PApplet {
             }
         }
 
-    }
+        //Asignamos las posiciones de la serpiente humana como ocupadas
+        for (int i = 1 ; i< humanSnake.posX.size(); i++ ){
+            map[humanSnake.posY.get(i)][humanSnake.posX.get(i)] = false;
+        }
 
+    }
     void drawMap(){
         //Dibujamos el cuadrado gris de abajo
         fill(200, 100, 100);
@@ -97,7 +86,6 @@ public class Main extends PApplet {
             rect(270, 510, 210, 20);
         }
     }
-
     void drawApple(){
         fill(215,0,75);
         rect(apple.position.x * bs, apple.position.y * bs, bs, bs);
@@ -109,7 +97,31 @@ public class Main extends PApplet {
             moveHumanSnake();
             drawSnake(humanSnake);
             detectBorder(humanSnake);
-            crashSnake(humanSnake);
+            crashSnake(humanSnake, botSnake);
+        }
+    }
+
+    void detectBorder(Snake snake){
+        if (snake.posX.get(0) < 0 || snake.posX.get(0) > (columnas - 1) || snake.posY.get(0) < 0  || snake.posY.get(0) > (filas - 1)){
+            snake.restart();
+        }
+    }
+    void crashSnake (Snake s1, Snake s2){
+        //Comprueba si se choca consigo mismo
+        if (s1.alive){
+            for (int i=2; i<s1.posX.size(); i++){
+                if (s1.posX.get(0) == s1.posX.get(i) && s1.posY.get(0) == s1.posY.get(i)){
+                    s1.restart();
+                }
+            }
+        }
+        //Comprueba si se la s1 se choca con la serpiente s2. Metodo igual que el anterior pero con la otra serpiente
+        if (s1.alive == true && s2.alive == true) {
+            for (int i = 0; i < s2.posX.size(); i++) {
+                if (s1.posX.get(0) == s2.posX.get(i) && s1.posY.get(0) == s2.posY.get(i)) {
+                    s1.restart();
+                }
+            }
         }
     }
 
@@ -137,6 +149,20 @@ public class Main extends PApplet {
         humanSnake.restart();
         initGame();
     }
+    void playBotSnake(Snake bot) {
+        if (bot.alive) {
+            moveBotSnake(bot);
+            drawSnake(bot);
+            detectBorder(bot);
+            crashSnake(bot, humanSnake);
+        }
+    }
+
+    void moveBotSnake(Snake s1) {
+        s1.mover(apple.getPosition(), map);
+        eat(s1);
+    }
+
 
     @Override
     public void keyPressed(){
@@ -165,15 +191,31 @@ public class Main extends PApplet {
             restartGame();
         }
     }
+    void deleteSnake(Snake s){
+        s.posX.clear();
+        s.posY.clear();
+        s.alive = false;
+    }
 
     @Override
     public void mouseClicked(){
         //Comprueba si esta en el cuadrado verde el click, Si es asai cambiara el estado del snake muerto-vivo
         if (mouseX >= 30 && mouseX <= 240 && mouseY >= 510 && mouseY <= 530){
             greenBox = !greenBox;
+
+            if (humanSnake.alive){
+                deleteSnake(humanSnake);
+            }else {
+                humanSnake.restart();
+            }
         }
         if (mouseX >= 270 && mouseX <= 480 && mouseY >= 510 && mouseY <= 530){
             purpleBox = !purpleBox;
+            if (botSnake.alive == true) {
+                deleteSnake(botSnake);
+            } else {
+                botSnake.restart();
+            }
         }
     }
 }
